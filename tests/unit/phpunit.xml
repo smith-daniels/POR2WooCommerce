@@ -1,0 +1,15 @@
+<phpunit stopOnError="true"
+         stopOnFailure="true"
+         stopOnIncomplete="true"
+         stopOnSkipped="true"
+         stopOnRisky="true">
+    <testsuites>
+        <testsuite name="POR Integration">
+            <file>SQLTest.php</file>
+            <file>CharedTest.php</file>
+            <file>CommerceConnectAndHashingTest.php</file>
+            <file>ImageClassTest.php</file>
+            <file>ItemFileTest.php</file>
+        </testsuite>
+    </testsuites>
+</phpunit>
