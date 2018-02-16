@@ -53,6 +53,9 @@ $deletedList = array();
 # Loop through the returned items from POR
 while($item = mysqli_fetch_object($result))
 {
+    # Trim whitespace off item number
+    $item->NUM = trim($item->NUM);
+    
     # Information for debugging
     $log->debug("Working on item number: $item->NUM");
 
@@ -149,13 +152,21 @@ if(count($existingProducts) !== 0)
 
         try {
             $commerceConnect->deleteProduct($product);
+        }
+        catch ( Throwable $e )
+        {
+            $log->warning("Could not delete a product. It may have already been deleted.");
+            $failureList[] = "Deletion Failed: $product";
+        }
+
+        try {
+            $log->notice("Deleting $product");
             $Hashing->deleteHash($product);
         }
         catch ( Throwable $e )
         {
-            $log->warning("Could not delete a product and/or product a product hash");
-            $failureList[] = "Deletion Failed: $product";
-            continue;
+            $log->warning("Could not delete product hash.");
+            $failureList[] = "Hash Deletion Failed: $product";
         }
     }
 }

@@ -1,7 +1,7 @@
 Welcome to Point-of-Rental WooCommerce!
 ===================
 
-The purpose of this plugin is to take a Point-of-Rental inventory and integrate it with WooCommerce. This plugin leverages multiple programs and is written in PHP. Provided your host supports php, this program should be fully compatible with shared hosts. Please see requirements section to confirm compatibility. 
+The purpose of this plugin is to take a Point-of-Rental inventory and integrate it with WooCommerce. This plugin leverages multiple programs and is written in PHP. Provided your host supports python, this program should be fully compatible with shared hosts. Please see requirements section to confirm compatibility. 
 
 ----------
 
@@ -16,38 +16,21 @@ Requirements
         - php_mbstring
         - php_gd2
         - php_ftp
- - WooCommerce API v2 (http://woocommerce.github.io/woocommerce-rest-api-docs/)
- - WooCommerce REST API PHP Library (https://github.com/woocommerce/wc-api-php)
- - Monolog (https://github.com/Seldaek/monolog)
- - Swift Mailer (https://github.com/swiftmailer/swiftmailer)
+ - WooCommerce API v2
+ - WooCommerce REST API PHP Library 
+ - Monolog
+ - Chared ( http://corpus.tools/wiki/Chared )
 
-Installation (section under construction)
+Installation
 -------------
 
- 1. Download latest release (master)
+ 1. Download latest release
+ 2. Install WooCommerce REST API PHP Library
 
- 2. Install dependencies via Composer
+    `composer require automattic/woocommerce`
 
-    `composer install`
+ 3. Install Monolog
 
- 3. Setup MSA2MySQL
- 
- 4. Setup Database Scheme 
+    `composer require monolog/monolog`
+ 4. Install Chared ( http://corpus.tools/wiki/Chared )
 
- 3. Configure Script
-```
-# URL to the wordpress site you want to use to WooCommerce API of 
-$siteURL = ""; 
-
-# Point-of-Rental database login information 
-define('PORHost','localhost');
-define('PORUser', 'example_user');
-define('PORPassword', 'example_password');
-define('PORDB', 'database_name');
-
-# Hashing database information 
-define('hashHost', 'localhost'); 
-define('hashUser', 'example_user'); 
-define('hashPassword', 'example_password'); 
-define('hashDB', 'database_name');
-```

@@ -12,13 +12,15 @@ class SQL
             "RATE1,RATE2,RATE3,RATE4,RATE5,RATE6,RATE7,RATE8,RATE9,RATE10,".
             "TYPE,NUM";
     private $log;
+    private $dryRun;
 
     # Create MySQL database connection
     public function __construct($host, $user, $password, $db)
     {
-        global $log;
+        global $log, $dryRun;
 
         $this->log = $log;
+        $this->dryRun = $dryRun;
 
         try{
             $this->conn = mysqli_connect($host, $user, $password, $db);
@@ -50,7 +52,7 @@ class SQL
             $sql = "SELECT NUM FROM `ItemFile` WHERE TYPE='$type' AND Category='$cat'";
         else
             #$sql = "SELECT * FROM `ItemFile` WHERE TYPE='v' AND HideOnWebsite=1 AND QTY > 0 AND (PER1+PER2+PER3+PER4+PER5+PER6+PER7+PER8) > 0";
-            $sql = "SELECT * FROM `ItemFile` WHERE TYPE='v' AND HideOnWebsite=0 AND QTY > 0 AND (PER1+PER2+PER3+PER4+PER5+PER6+PER7+PER8) > 0 AND (RATE1+RATE2+RATE3+RATE4+RATE5+RATE6+RATE7+RATE8) > 0";
+            $sql = "SELECT * FROM `ItemFile` WHERE (TYPE='v' OR Type='d') AND HideOnWebsite=0 AND QTY > 0 AND (PER1+PER2+PER3+PER4+PER5+PER6+PER7+PER8) > 0 AND (RATE1+RATE2+RATE3+RATE4+RATE5+RATE6+RATE7+RATE8) > 0";
             #$sql = "SELECT NUM FROM `ItemFile` WHERE TYPE='v' AND HideOnWebsite=1 AND QTY > 0";
 
         return $this->query($sql);
@@ -90,6 +92,18 @@ class SQL
     public function ItemComments_Get($num)
     {
         return $this->query("SELECT Specs,PrintOut FROM `ItemComments` WHERE Num=$num LIMIT 1");
+    }
+
+    # Get an item on item key instead of number
+    public function ItemFile_ByKey_Get($key)
+    {
+        return $this->query("SELECT NUM FROM `ItemFile` WHERE `KEY`='$key' LIMIT 1");
+    }
+
+    # Fetch any packaged items to calculate pricing
+    public function ItemKitsAuto_Get($num)
+    {
+        return $this->query("SELECT ItemKey,Quantity,DiscountPercent FROM `ItemKitsAuto` WHERE Num=$num");
     }
 
     # Minimizes code and exception handling

@@ -7,14 +7,16 @@ class SQLHash
 {
     private $conn;
     private $itemSelect = "Hash, WP_ID";
+    private $dryRun;
     private $log;
 
     # Create a MySQL connection
     public function __construct($host, $user, $password, $db)
     {
-        global $log;
+        global $log, $dryRun;
 
         $this->log = $log;
+        $this->dryRun = $dryRun;
 
         try{
             $this->conn = mysqli_connect($host, $user, $password, $db);
@@ -49,21 +51,26 @@ class SQLHash
     # Saves a new hash into the database
     public function saveHash($id, $hash, $wp_id)
     {
-        $result = $this->query("INSERT INTO `Hashes` (`ID`, `Hash`, `WP_ID`) VALUES ('$id', '$hash', '$wp_id')");
+        if(!$this->dryRun)
+            $result = $this->query("INSERT INTO `Hashes` (`ID`, `Hash`, `WP_ID`) VALUES ('$id', '$hash', '$wp_id')");
     }
 
     # Updates a hash
     public function updateHash($id, $hash, $wp_id)
     {
-        $result = $this->query("DELETE FROM `Hashes` WHERE `ID`='$id' AND `WP_ID`=$wp_id");
-        $this->saveHash($id, $hash, $wp_id); 
-#         $result = mysqli_query($this->conn, "UPDATE `Hashes` SET `Hash`='$hash' WHERE `ID`='$id'");
+        if(!$this->dryRun)
+        {
+            $result = $this->query("DELETE FROM `Hashes` WHERE `ID`='$id' AND `WP_ID`=$wp_id");
+            $this->saveHash($id, $hash, $wp_id); 
+#           $result = mysqli_query($this->conn, "UPDATE `Hashes` SET `Hash`='$hash' WHERE `ID`='$id'");
+        }    
     }
 
     # Delete a hash for a product 
     public function deleteHash($sku)
     {
-        $result = $this->query("DELETE FROM `Hashes` WHERE `ID`='$sku'");
+        if(!$this->dryRun)
+            $result = $this->query("DELETE FROM `Hashes` WHERE `ID`='$sku'");
     }
 
     # Minimizes code and exception handling
