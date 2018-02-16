@@ -31,6 +31,8 @@
 
 111 - Failed to create slug
 
+112 - Could not get product kit items
+
 # CommerceConnect Error Codes
 
 200 - Could not create instance of PHP Wrapper Class

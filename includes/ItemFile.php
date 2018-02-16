@@ -18,6 +18,7 @@ class ItemFile
     public $storedPictures; // Item pictures
     public $specs; // Item specs
     public $printOut; // Usually warning information for a rental item
+    public $kits;   // Auto add items to the current item
     protected $hashing; // Instance of the hashing class
     private $categoryHash; // Hash of the category information
     private $productHash; // Hash of the product (includes category information)
@@ -188,6 +189,49 @@ class ItemFile
             }
         }
 
+        # Kit items are stored in a different table, fetch them
+        try{
+            $result = $SQL->ItemKitsAuto_Get($this->num);
+        }
+        catch ( Throwable $e )
+        {
+            $code['code'] = 112;
+
+            $this->log->error("Could not get kit information from database. $this->num", $code);
+            $this->log->debug($e->getMessage(), $code);
+
+            throw new ItemFileException((string)$code['code'], $code['code']);
+        }
+
+        # Calculate the additional pricing based on the kit items
+        while($kitItem = mysqli_fetch_object($result))
+        {
+            $kitItemNum = mysqli_fetch_object($SQL->ItemFile_ByKey_Get($kitItem->ItemKey));
+
+            $kitItemFile = new ItemFile($SQL, $this->hashing, $kitItemNum->NUM);
+
+            # Get all possible rental rate options
+            $i = 1;
+            while($i <= 8)
+            {
+                # Make sure the variable is set
+                if(!isset($this->kits[$this->period[$i]]))
+                    $this->kits[$this->period[$i]] = 0;
+                # Add the kit items rate for this period
+                if(!empty($kitItemFile->rate[$this->period[$i]]))
+                    $this->kits[$this->period[$i]] += $kitItemFile->rate[$this->period[$i]]*((100-$kitItem->DiscountPercent)/100);
+
+                # See if the kit item has any kits of its own and add them
+                if(!empty($kitItemFile->kits))
+                {
+                    if(!empty($kitItemFile->kits[$this->period[$i]]))
+                        $this->kits[$this->period[$i]] += $kitItemFile->kits[$this->period[$i]];
+                }
+                
+                $i++;
+            }
+        }
+
         # Create and store hashes
         $this->generateProductHash();
         $this->generateCategoryHash();
@@ -307,11 +351,10 @@ class ItemFile
         $this->productHash = md5(var_export($this->name, true)); // 0
         $this->productHash .= md5(var_export($this->dWaiver, true)); // 1
         $this->productHash .= md5(var_export($this->cat['id'], true)); // 2
-        $this->productHash .= md5(var_export($this->period, true).var_export($this->rate, true)); // 3
+        $this->productHash .= md5(var_export($this->period, true).var_export($this->rate, true).var_export($this->kits, true)); // 3
         $this->productHash .= md5(var_export($this->num, true)); // 4
         $this->productHash .= md5(var_export($this->storedPictures, true)); // 5
         $this->productHash .= md5(var_export($this->specs, true)); // 6
-        //$this->productHash .= md5(var_export($this->printOut, true)); // 7
     }
 
     # Generate the hash of just the category
@@ -334,7 +377,7 @@ class ItemFile
             $curHash = str_split($this->productHash, 32);
             $i = 0;
 
-            while($i < 7)
+            while($i < strlen($hash)/32)
             {
                 $update[$i] = strcmp($dbHash[$i], $curHash[$i]) == 0 ? false : true;
                 $i++;

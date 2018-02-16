@@ -18,6 +18,7 @@ class CommerceConnect
     private $imageRef; // Used to keep a reference to the images so they aren't dereferenced and deleted
     private $imageRefCat; // Use to keep a reference to the category image so they aren't dereerenced and deleted
     private $salesTax; // Used to save from config.php
+    private $dryRun; // Detects if this is a dry run
     private $log; // Monolog
 
 
@@ -25,10 +26,13 @@ class CommerceConnect
     public function __construct()
     {
         # Pull in configuration variables to the class
-        global $log, $salesTax, $cs, $ck, $rateAttributeID, $attributeMap, $siteURL;
+        global $log, $dryRun, $salesTax, $cs, $ck, $rateAttributeID, $attributeMap, $siteURL;
 
         # Store instance locally
         $this->log = $log;
+
+        # Store instance locally
+        $this->dryRun = $dryRun;
 
         # Save salesTax property
         $this->salesTax = $salesTax;
@@ -664,9 +668,18 @@ class CommerceConnect
         # Loop through all the options that are relevant for this product
         foreach($this->attributeData[0]['options'] as $key=>$attribute)
         {
+            # Gets rate index
+            $rateIndex = $this->getAttributeIndex($attribute);
+
             # Gets the rate based on the index of the period
-            $data['regular_price'] = $this->productData->rate[$this->getAttributeIndex($attribute)];
-     
+            $data['regular_price'] = $this->productData->rate[$rateIndex];
+
+            # Gets auto add kit rate based on the index of the period if there are kit pricings
+            $data['regular_price'] += (!empty($this->productData->kits) ? $this->productData->kits[$rateIndex] : 0);
+
+            # Convert to string
+            $data['regular_price'] = $data['regular_price']."";
+
             # Associate the variation with the appropriate attribute
             $data['attributes'][0] = [
                     'id'        => $this->rateAttributeID,
@@ -853,8 +866,9 @@ class CommerceConnect
             # Debug information
             $this->log->debug(print_r($data, true));
 
-            # Send request to API
-            return $this->woocommerce->post($endpoint, $data);
+            # Send request to APIi
+            if(!$this->dryRun)
+                return $this->woocommerce->post($endpoint, $data);
         }
         catch( Throwable $e )
         {
@@ -928,7 +942,8 @@ class CommerceConnect
         {
             $this->log->info("Sending delete request");
             $this->log->debug("Endpoint: ".$endpoint);
-            return $this->woocommerce->delete($endpoint, ['force' => true]);
+            if(!$this->dryRun)
+                return $this->woocommerce->delete($endpoint, ['force' => true]);
         }
         catch(Exception $e)
         {
